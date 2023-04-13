@@ -13,6 +13,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+# функция кнопки /start, которая запрашивает имя пользователя и возвращает 1 - состояние беседы
+# которое переходит в first_response
 async def start(update, context):
     await update.message.reply_text(
         "Привет. Я справочник по нейросетям. Я могу тебе рассказать много интересного о нейросетях\n"
@@ -32,7 +34,6 @@ async def first_response(update, context):
     return 2
 
 
-
 async def second_response(update, context):
     # Ответ на второй вопрос.
     # Мы можем его сохранить в базе данных или переслать куда-либо.
@@ -44,13 +45,9 @@ async def second_response(update, context):
     # Все обработчики из states и fallbacks становятся неактивными.
 
 
-
-
 async def stop(update, context):
     await update.message.reply_text("Всего доброго!")
     return ConversationHandler.END
-
-
 
 async def help_command(update, context):
     """Отправляет сообщение когда получена команда /help"""
@@ -75,8 +72,17 @@ async def work_time(update, context):
     await update.message.reply_text(
         "Время работы: круглосуточно.")
 
-# функция кнопки /start, которая запрашивает имя пользователя и возвращает 1 - состояние беседы
-# которое переходит в first_response
+
+# Зарегистрируем их в приложении перед
+# регистрацией обработчика текстовых сообщений.
+# Первым параметром конструктора CommandHandler я
+# вляется название команды.
+
+reply_keyboard = [['/address', '/phone'],
+                      ['/site', '/work_time']]
+markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
+
+
 conv_handler = ConversationHandler(
         # Точка входа в диалог.
         # В данном случае — команда /start. Она задаёт первый вопрос.
@@ -93,19 +99,7 @@ conv_handler = ConversationHandler(
 
         # Точка прерывания диалога. В данном случае — команда /stop.
         fallbacks=[CommandHandler('stop', stop)]
-)
-
-# Зарегистрируем их в приложении перед
-# регистрацией обработчика текстовых сообщений.
-# Первым параметром конструктора CommandHandler я
-# вляется название команды.
-
-reply_keyboard = [['/address', '/phone'],
-                      ['/site', '/work_time']]
-markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
-
-
-
+    )
 
 
 
@@ -127,3 +121,9 @@ def main():
 
     # Запускаем приложение.
     application.run_polling()
+
+
+
+# Запускаем функцию main() в случае запуска скрипта.
+if __name__ == '__main__':
+    main()
