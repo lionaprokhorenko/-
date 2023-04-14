@@ -2,7 +2,7 @@ import logging
 from telegram.ext import Application, MessageHandler, filters
 from config import BOT_TOKEN
 from telegram.ext import CommandHandler, ConversationHandler
-from telegram import ReplyKeyboardMarkup
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 
 
 # Запускаем логгирование
@@ -39,8 +39,8 @@ async def second_response(update, context):
     # Мы можем его сохранить в базе данных или переслать куда-либо.
     age = update.message.text
     logger.info(age)
-    await update.message.reply_text("Спасибо за ответ! А теперь смотри, что я знаю о нейросетях")
-    reply_markup = markup
+    await update.message.reply_text("Спасибо за ответ! А теперь смотри, что я знаю о нейросетях",
+    reply_markup = markup)
     return ConversationHandler.END  # Константа, означающая конец диалога.
     # Все обработчики из states и fallbacks становятся неактивными.
 
@@ -73,13 +73,26 @@ async def work_time(update, context):
         "Время работы: круглосуточно.")
 
 
+async def open(update, context):
+    await update.message.reply_text('Смотри, что я знаю о нейросетях',
+                                    reply_markup=markup)
+
+
+async def close(update, context):
+    await update.message.reply_text('Клавиатура закрыта, если захочешь ее открыть, нажми на команду /open',
+                                    reply_markup=ReplyKeyboardRemove())
+
+async def info(update, context):
+    await update.message.reply_text('создание',
+                                    reply_markup=ReplyKeyboardRemove())
+
 # Зарегистрируем их в приложении перед
 # регистрацией обработчика текстовых сообщений.
 # Первым параметром конструктора CommandHandler я
 # вляется название команды.
 
-reply_keyboard = [['/address', '/phone'],
-                      ['/site', '/work_time']]
+reply_keyboard = [['guide', 'facts'],
+                      ['info', 'close']]
 markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
 
 
@@ -110,12 +123,15 @@ def main():
 
     application = Application.builder().token(BOT_TOKEN).build()
 
-    application.add_handler(CommandHandler("start", start))
+    # application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("address", address))
     application.add_handler(CommandHandler("phone", phone))
     application.add_handler(CommandHandler("site", site))
     application.add_handler(CommandHandler("work_time", work_time))
+    application.add_handler(CommandHandler("close", close))
+    application.add_handler(CommandHandler("open", open))
+    application.add_handler(CommandHandler("info", info))
 
     application.add_handler(conv_handler)
 
