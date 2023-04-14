@@ -3,7 +3,8 @@ from telegram.ext import Application, MessageHandler, filters
 from config import BOT_TOKEN
 from telegram.ext import CommandHandler, ConversationHandler
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
-
+from random import randint
+import sqlite3
 
 # Запускаем логгирование
 logging.basicConfig(
@@ -12,6 +13,16 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+
+
+db = sqlite3.connect('users.db')
+
+cur = db.cursor()
+cur.execute("""CREATE TABLE IF NOT EXISTS users(
+    name TEXT,
+   age integer);
+""")
+db.commit()
 
 # функция кнопки /start, которая запрашивает имя пользователя и возвращает 1 - состояние беседы
 # которое переходит в first_response
@@ -25,8 +36,9 @@ async def start(update, context):
 async def first_response(update, context):
     # Это ответ на первый вопрос.
     # Мы можем использовать его во втором вопросе.
+    global name
     name = update.message.text
-    print(name)
+    # print(name)
     await update.message.reply_text(
         f"Приятно познакомиться, {name}! А сколько тебе лет?")
     # Следующее текстовое сообщение будет обработано
@@ -39,6 +51,13 @@ async def second_response(update, context):
     # Мы можем его сохранить в базе данных или переслать куда-либо.
     age = update.message.text
     logger.info(age)
+    cur.execute("INSERT INTO users(name, age) VALUES(?, ?);",
+                (name, age))  # записываем ифнормацию о пользователе
+    db.commit()
+
+    cur.execute('SELECT * FROM users')
+    rows = cur.fetchall()
+    print(rows)
     await update.message.reply_text("Спасибо за ответ! А теперь смотри, что я знаю о нейросетях",
     reply_markup = markup)
     return ConversationHandler.END  # Константа, означающая конец диалога.
@@ -49,34 +68,16 @@ async def stop(update, context):
     await update.message.reply_text("Всего доброго!")
     return ConversationHandler.END
 
-async def help_command(update, context):
-    """Отправляет сообщение когда получена команда /help"""
-    await update.message.reply_text("Я пока не умею помогать... Я только ваше эхо.")
 
-
-async def address(update, context):
-    await update.message.reply_text(
-        "Адрес: г. Москва, ул. Льва Толстого, 16")
-
-
-async def phone(update, context):
-    await update.message.reply_text("Телефон: +7(495)776-3030")
-
-
-async def site(update, context):
-    await update.message.reply_text(
-        "Сайт: http://www.yandex.ru/company")
-
-
-async def work_time(update, context):
-    await update.message.reply_text(
-        "Время работы: круглосуточно.")
-
-
-async def open(update, context):
+async def openKey(update, context):
     await update.message.reply_text('Смотри, что я знаю о нейросетях',
                                     reply_markup=markup)
 
+async def facts(update, context):
+    with open('facts.txt') as f:
+        s = f.readlines()
+        a = s[randint(0, len(s) - 1)]
+    await update.message.reply_text(a)
 
 async def close(update, context):
     await update.message.reply_text('Клавиатура закрыта, если захочешь ее открыть, нажми на команду /open',
@@ -91,8 +92,8 @@ async def info(update, context):
 # Первым параметром конструктора CommandHandler я
 # вляется название команды.
 
-reply_keyboard = [['guide', 'facts'],
-                      ['info', 'close']]
+reply_keyboard = [['/guide', '/facts'],
+                      ['/info', '/close']]
 markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
 
 
@@ -124,13 +125,10 @@ def main():
     application = Application.builder().token(BOT_TOKEN).build()
 
     # application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("help", help_command))
-    application.add_handler(CommandHandler("address", address))
-    application.add_handler(CommandHandler("phone", phone))
-    application.add_handler(CommandHandler("site", site))
-    application.add_handler(CommandHandler("work_time", work_time))
+    # application.add_handler(CommandHandler("guide", guide))
+    application.add_handler(CommandHandler("facts", facts))
     application.add_handler(CommandHandler("close", close))
-    application.add_handler(CommandHandler("open", open))
+    application.add_handler(CommandHandler("open", openKey))
     application.add_handler(CommandHandler("info", info))
 
     application.add_handler(conv_handler)
