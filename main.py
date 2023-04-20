@@ -219,6 +219,7 @@ def main():
     application.add_handler(CommandHandler("use", use))
     application.add_handler(CommandHandler("future", future))
     application.add_handler(CommandHandler("creation", creation))
+    application.add_handler(CommandHandler("lib", lib))
     application.add_handler(conv_handler)
 
     # Запускаем приложение.
